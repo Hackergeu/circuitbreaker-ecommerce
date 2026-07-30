@@ -44,6 +44,12 @@ resilience4j:
     instances:
       recommendationCircuitBreaker:
         timeout-duration: 2s
+  ratelimiter:
+    instances:
+      productServiceRateLimiter:
+        limit-for-period: 5
+        limit-refresh-period: 10s
+        timeout-duration: 0s
 
 management:
   endpoints:
@@ -53,3 +59,6 @@ management:
   endpoint:
     health:
       show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
