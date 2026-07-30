@@ -1,0 +1,124 @@
+{
+  "info": {
+    "name": "CircuitBreaker E-Commerce",
+    "description": "API collection for the CircuitBreaker cloud-native e-commerce project. Covers direct service endpoints, gateway-routed endpoints, and circuit breaker/actuator monitoring endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "gateway_url", "value": "http://localhost:8080" },
+    { "key": "product_url", "value": "http://localhost:8081" },
+    { "key": "inventory_url", "value": "http://localhost:8082" },
+    { "key": "recommendation_url", "value": "http://localhost:8083" },
+    { "key": "eureka_url", "value": "http://localhost:8761" }
+  ],
+  "item": [
+    {
+      "name": "1. Direct Service Endpoints (bypassing gateway)",
+      "item": [
+        {
+          "name": "Get Products (direct)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{product_url}}/products", "host": ["{{product_url}}"], "path": ["products"] }
+          }
+        },
+        {
+          "name": "Get Inventory (direct)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{inventory_url}}/inventory", "host": ["{{inventory_url}}"], "path": ["inventory"] }
+          }
+        },
+        {
+          "name": "Get Recommendations (direct)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{recommendation_url}}/recommendations", "host": ["{{recommendation_url}}"], "path": ["recommendations"] }
+          }
+        },
+        {
+          "name": "Get Recommendations - Slow endpoint (direct)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{recommendation_url}}/recommendations/slow", "host": ["{{recommendation_url}}"], "path": ["recommendations", "slow"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Gateway-Routed Endpoints",
+      "item": [
+        {
+          "name": "Get Products (via Gateway)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/products", "host": ["{{gateway_url}}"], "path": ["products"] }
+          }
+        },
+        {
+          "name": "Get Inventory (via Gateway)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/inventory", "host": ["{{gateway_url}}"], "path": ["inventory"] }
+          }
+        },
+        {
+          "name": "Get Recommendations (via Gateway)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/recommendations", "host": ["{{gateway_url}}"], "path": ["recommendations"] }
+          }
+        },
+        {
+          "name": "Get Recommendations - Slow (via Gateway, triggers Circuit Breaker)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/recommendations/slow", "host": ["{{gateway_url}}"], "path": ["recommendations", "slow"] }
+          },
+          "description": "Hit this 5-6 times in a row to trip the circuit breaker. First few calls will fail after a 2s timeout; once the failure threshold is hit, responses become instant fallback data."
+        }
+      ]
+    },
+    {
+      "name": "3. Monitoring & Circuit Breaker",
+      "item": [
+        {
+          "name": "Eureka Dashboard",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{eureka_url}}", "host": ["{{eureka_url}}"], "path": [] }
+          },
+          "description": "Open in browser to see visual dashboard rather than raw JSON."
+        },
+        {
+          "name": "Gateway Health",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/actuator/health", "host": ["{{gateway_url}}"], "path": ["actuator", "health"] }
+          }
+        },
+        {
+          "name": "Circuit Breaker Status",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/actuator/circuitbreakers", "host": ["{{gateway_url}}"], "path": ["actuator", "circuitbreakers"] }
+          },
+          "description": "Primary way to verify circuit breaker state (CLOSED / OPEN / HALF_OPEN), failure rate, and buffered calls. Use this instead of /actuator/health due to a known Spring Boot 4.x gap (resilience4j/resilience4j#2350)."
+        }
+      ]
+    },
+    {
+      "name": "4. Fallback Endpoint (internal)",
+      "item": [
+        {
+          "name": "Recommendations Fallback",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/fallback/recommendations", "host": ["{{gateway_url}}"], "path": ["fallback", "recommendations"] }
+          },
+          "description": "This is normally triggered automatically by the circuit breaker, but can be hit directly to inspect the fallback response."
+        }
+      ]
+    }
+  ]
+}
