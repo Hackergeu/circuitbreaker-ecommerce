@@ -47,12 +47,13 @@ resilience4j:
     instances:
       recommendationCircuitBreaker:
         timeout-duration: 2s
-  ratelimiter:
+
+  bulkhead:
     instances:
-      productServiceRateLimiter:
-        limit-for-period: 5
-        limit-refresh-period: 10s
-        timeout-duration: 0s
+      recommendationCircuitBreaker:
+        max-concurrent-calls: 5
+        max-wait-duration: 2s
+
 
 management:
   endpoints:
