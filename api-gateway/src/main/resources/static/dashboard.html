@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Circuit Breaker Status — CircuitBreaker Gateway</title>
+    <style>
+        body {
+          font-family: 'Segoe UI', Arial, sans-serif;
+          background: #0f1117;
+          color: #e6e6e6;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 40px 20px;
+          margin: 0;
+        }
+        h1 {
+          font-size: 22px;
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+        .subtitle {
+          color: #9099a8;
+          font-size: 13px;
+          margin-bottom: 32px;
+        }
+        .card {
+          background: #161a23;
+          border: 1px solid #262b38;
+          border-radius: 12px;
+          padding: 28px 36px;
+          min-width: 320px;
+          text-align: center;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+        }
+        .indicator {
+          width: 70px;
+          height: 70px;
+          border-radius: 50%;
+          margin: 0 auto 16px auto;
+          transition: background-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        .closed {
+          background: #22c55e;
+          box-shadow: 0 0 24px rgba(34, 197, 94, 0.6);
+        }
+        .open {
+          background: #ef4444;
+          box-shadow: 0 0 24px rgba(239, 68, 68, 0.6);
+        }
+        .half_open {
+          background: #f59e0b;
+          box-shadow: 0 0 24px rgba(245, 158, 11, 0.6);
+        }
+        .unknown {
+          background: #4b5563;
+        }
+        .state-label {
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: 1px;
+          margin-bottom: 20px;
+        }
+        .metrics {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px 24px;
+          text-align: left;
+          font-size: 13px;
+          color: #c3c9d4;
+        }
+        .metrics div span {
+          display: block;
+          color: #6b7280;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .metrics div strong {
+          font-size: 15px;
+          color: #f1f1f1;
+        }
+        .footer-note {
+          margin-top: 24px;
+          font-size: 12px;
+          color: #6b7280;
+          text-align: center;
+          max-width: 360px;
+        }
+        .last-updated {
+          margin-top: 16px;
+          font-size: 11px;
+          color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Recommendation Service — Circuit Breaker</h1>
+<div class="subtitle">Live state, polled every 3 seconds from /actuator/circuitbreakers</div>
+
+<div class="card">
+    <div id="indicator" class="indicator unknown"></div>
+    <div id="stateLabel" class="state-label">LOADING...</div>
+
+    <div class="metrics">
+        <div><span>Failure Rate</span><strong id="failureRate">—</strong></div>
+        <div><span>Threshold</span><strong id="failureThreshold">—</strong></div>
+        <div><span>Buffered Calls</span><strong id="bufferedCalls">—</strong></div>
+        <div><span>Failed Calls</span><strong id="failedCalls">—</strong></div>
+        <div><span>Slow Call Rate</span><strong id="slowCallRate">—</strong></div>
+        <div><span>Not Permitted</span><strong id="notPermitted">—</strong></div>
+    </div>
+</div>
+
+<div class="footer-note">
+    Green = CLOSED (healthy) &nbsp;·&nbsp; Yellow = HALF_OPEN (testing recovery) &nbsp;·&nbsp; Red = OPEN (fallback active)
+</div>
+<div id="lastUpdated" class="last-updated"></div>
+
+<script>
+    const CB_NAME = "recommendationCircuitBreaker";
+    const ENDPOINT = "/actuator/circuitbreakers";
+
+    async function pollCircuitBreaker() {
+      try {
+        const res = await fetch(ENDPOINT);
+        const data = await res.json();
+        const cb = data.circuitBreakers[CB_NAME];
+
+        if (!cb) {
+          setState("unknown", "NOT FOUND");
+          return;
+        }
+
+        const state = cb.state.toLowerCase(); // "closed" | "open" | "half_open"
+        setState(state, cb.state);
+
+        document.getElementById("failureRate").textContent = cb.failureRate;
+        document.getElementById("failureThreshold").textContent = cb.failureRateThreshold;
+        document.getElementById("bufferedCalls").textContent = cb.bufferedCalls;
+        document.getElementById("failedCalls").textContent = cb.failedCalls;
+        document.getElementById("slowCallRate").textContent = cb.slowCallRate;
+        document.getElementById("notPermitted").textContent = cb.notPermittedCalls;
+
+        document.getElementById("lastUpdated").textContent =
+          "Last updated: " + new Date().toLocaleTimeString();
+
+      } catch (err) {
+        setState("unknown", "GATEWAY UNREACHABLE");
+      }
+    }
+
+    function setState(cssClass, label) {
+      const indicator = document.getElementById("indicator");
+      indicator.className = "indicator " + cssClass;
+      document.getElementById("stateLabel").textContent = label;
+    }
+
+    pollCircuitBreaker();
+    setInterval(pollCircuitBreaker, 3000);
+</script>
+
+</body>
+</html>
