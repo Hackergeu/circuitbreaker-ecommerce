@@ -92,6 +92,36 @@
           font-size: 11px;
           color: #4b5563;
         }
+        .trigger-btn {
+          margin-top: 28px;
+          padding: 14px 28px;
+          background: #dc2626;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          cursor: pointer;
+          transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .trigger-btn:hover:not(:disabled) {
+          background: #b91c1c;
+        }
+        .trigger-btn:active:not(:disabled) {
+          transform: scale(0.97);
+        }
+        .trigger-btn:disabled {
+          background: #4b5563;
+          cursor: not-allowed;
+          opacity: 0.7;
+        }
+        .trigger-status {
+          margin-top: 12px;
+          font-size: 13px;
+          color: #9099a8;
+          min-height: 18px;
+        }
     </style>
 </head>
 <body>
@@ -111,6 +141,11 @@
         <div><span>Slow Call Rate</span><strong id="slowCallRate">—</strong></div>
         <div><span>Not Permitted</span><strong id="notPermitted">—</strong></div>
     </div>
+
+    <button id="triggerBtn" class="trigger-btn" onclick="triggerLatency()">
+        ⚡ Trigger Latency
+    </button>
+    <div id="triggerStatus" class="trigger-status"></div>
 </div>
 
 <div class="footer-note">
@@ -159,6 +194,30 @@
 
     pollCircuitBreaker();
     setInterval(pollCircuitBreaker, 3000);
+
+    async function triggerLatency() {
+      const btn = document.getElementById("triggerBtn");
+      const status = document.getElementById("triggerStatus");
+      const BURST_COUNT = 4; // enough to exceed minimum-number-of-calls (3) and cross the failure threshold
+
+      btn.disabled = true;
+      btn.textContent = "⏳ Sending burst...";
+
+      for (let i = 1; i <= BURST_COUNT; i++) {
+        status.textContent = `Sending slow request ${i} of ${BURST_COUNT}...`;
+        try {
+          await fetch("/recommendations/slow");
+        } catch (e) {
+          // expected once the breaker opens and starts rejecting fast
+        }
+      }
+
+      status.textContent = "Burst complete — watch the indicator above.";
+      btn.disabled = false;
+      btn.textContent = "⚡ Trigger Latency";
+
+      setTimeout(() => { status.textContent = ""; }, 6000);
+    }
 </script>
 
 </body>
