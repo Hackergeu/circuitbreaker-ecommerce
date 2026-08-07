@@ -34,7 +34,6 @@ eureka:
   instance:
     prefer-ip-address: true
 
-
 resilience4j:
   circuitbreaker:
     instances:
@@ -48,13 +47,11 @@ resilience4j:
     instances:
       recommendationCircuitBreaker:
         timeout-duration: 2s
-
   bulkhead:
     instances:
       recommendationCircuitBreaker:
         max-concurrent-calls: 5
         max-wait-duration: 2s
-
 
 management:
   endpoints:
@@ -67,3 +64,9 @@ management:
   health:
     circuitbreakers:
       enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
