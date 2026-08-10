@@ -152,7 +152,7 @@ http://localhost:8080/actuator/circuitbreakers
 ### Running locally
 
 ```bash
-git clone https://github.com/<your-username>/circuitbreaker-ecommerce.git
+git clone https://github.com/Hackergeu/circuitbreaker-ecommerce.git
 cd circuitbreaker-ecommerce
 ```
 
